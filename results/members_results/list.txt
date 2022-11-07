@@ -1,0 +1,10 @@
+po.owl.log
+doid.owl.log
+chebi.owl.log
+pato.owl.log
+bfo.owl.log
+obi.owl.log
+xao.owl.log
+zfa.owl.log
+go.owl.log
+pr.owl.log
