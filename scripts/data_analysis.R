@@ -7,7 +7,7 @@ library(outForest)
 library(pvclust)
 library(stringr)
 
-
+ 
 ### FUNCTIONS ###
 
 # Creates a figure from 'obj' in bmp format with the size specified
@@ -260,6 +260,82 @@ mergeFiles <- function(folder_path, pattern){
   return (dataset)
 }
 
+## Call mergeFiles to combine the contents of files with the IRIs corresponding to a metric.
+## Calculate the metric of the whole repository and 
+## return it as a list containing the following fields: metric, dividend, divisor and ratio
+getWholeRepositoryMetric <- function(folder_path, pattern){
+  
+  # Combine the contents of files with the IRIs
+  EntityWithNoGroup <- mergeFiles(folder_path, pattern)
+  EntityWithNoGroup[[3]] = as.logical(EntityWithNoGroup[[3]])
+  
+  # Filter entities with no annotations
+  EntityWithNoGroupTrue <- EntityWithNoGroup %>% filter(EntityWithNoGroup[[3]])
+  EntityWithNoGroupTrue[[2]] = tolower(EntityWithNoGroupTrue[[2]])
+  EntityWithNoGroupTrue <- unique(EntityWithNoGroupTrue)
+  EntityWithNoGroupTrue <- EntityWithNoGroupTrue[,2]
+  
+  # Filter entities with annotations
+  EntityWithNoGroupFalse <- EntityWithNoGroup %>% filter(!EntityWithNoGroup[[3]])
+  EntityWithNoGroupFalse[[2]] = tolower(EntityWithNoGroupFalse[[2]])
+  EntityWithNoGroupFalse <- unique(EntityWithNoGroupFalse)
+  EntityWithNoGroupFalse <- EntityWithNoGroupFalse[,2]
+  
+  # Exclude the IRIs with annotation (at least one occurrence in the whole repository) from the set of entities with no annotations
+  EntityWithNoGroupTrue <- setdiff(EntityWithNoGroupTrue, EntityWithNoGroupFalse)
+  
+  # At this point we have two disjoint sets of entities. 
+  # One set with no annotations in the whole repository and one set with, at least one annotation.
+  
+  metric <- EntityWithNoGroup[1,1]
+  dividend <- length(EntityWithNoGroupTrue)
+  divisor <- sum(length(EntityWithNoGroupTrue),length(EntityWithNoGroupFalse))
+  ratio <- dividend / divisor
+  
+  rm(EntityWithNoGroup)
+  rm(EntityWithNoGroupFalse)
+  rm(EntityWithNoGroupTrue)
+  gc()
+  
+  dr <- list(metric, dividend,divisor, ratio)
+  
+  return (dr)
+}
+
+## Call getWholeRepositoryMetric with the pattern "entity.*group*" relative to each metric.
+## Return a dataframe with all metrics calculated considering the whole repository
+getWholeRepositoryMetrics <- function(folder_path){
+
+  df <- data.frame(metric=character(), dividend=numeric(), divisor=numeric(), ratio=double())
+  dr <- getWholeRepositoryMetric(folder_path, pattern="Classes.*name")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="Classes.*synonym")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="Classes.*description")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="ObjectProperties.*name")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="ObjectProperties.*synonym")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="ObjectProperties.*description")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))  
+  dr <- getWholeRepositoryMetric(folder_path, pattern="DataProperties.*name")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="DataProperties.*synonym")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="DataProperties.*description")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))    
+  dr <- getWholeRepositoryMetric(folder_path, pattern="AnnotationProperties.*name")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="AnnotationProperties.*synonym")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))
+  dr <- getWholeRepositoryMetric(folder_path, pattern="AnnotationProperties.*description")
+  df <- rbind(df,setNames(data.frame(dr), colnames(df)))    
+  
+  return (df)
+  
+}
+
 
 ### LOAD DATA ###
 
@@ -284,21 +360,28 @@ all$File = as.character(all$File)
 metricsToShow = unique(all$Metric)
 View(compareCandidatesAndMembers(filter(all, Metric %in% metricsToShow)))
 
-metricsToShow = filter(all$Metric, Metric %not in% metricsToShow)
-
 # Summary of the readability metrics regarding classes
 summary(spread(all, Metric, Value) %>% select(File, Member, contains('Classes with')))
 # Complete data of the readability metrics regarding classes
 View(spread(all, Metric, Value) %>% select(File, Member, contains('Classes with')))
 
+# Summary of the readability metrics regarding ObjectProperties
+summary(spread(all, Metric, Value) %>% select(File, Member, contains('ObjectProperties with')))
+# Complete data of the readability metrics regarding ObjectProperties
+View(spread(all, Metric, Value) %>% select(File, Member, contains('ObjectProperties with')))
+
+# Summary of the readability metrics regarding DataProperties
+summary(spread(all, Metric, Value) %>% select(File, Member, contains('DataProperties with')))
+# Complete data of the readability metrics regarding DataProperties
+View(spread(all, Metric, Value) %>% select(File, Member, contains('DataProperties with')))
+
+# Summary of the readability metrics regarding AnnotationProperties
+summary(spread(all, Metric, Value) %>% select(File, Member, contains('AnnotationProperties with')))
+# Complete data of the readability metrics regarding AnnotationProperties
+View(spread(all, Metric, Value) %>% select(File, Member, contains('AnnotationProperties with')))
+
 # Metrics ranking by mean.
 metricsToShow = unique(all$Metric)
-comparisons = list(c("Classes with no name", "ObjectProperties with no name"),
-                   c("DataProperties with no name", "Classes with no description"),
-                   c("Classes with no description", "ObjectProperties with no description"),
-                   c("ObjectProperties with no description", "AnnotationProperties with no name"),
-                   c("Classes with no synonym", "AnnotationProperties with no description"),
-                   c("ObjectProperties with no synonym", "DataProperties with no synonym"))
 
 x = filter(all, Metric %in% metricsToShow)
 summary(x)
@@ -311,7 +394,6 @@ x_order_mean = x_order_mean %>%
   arrange(mean) 
 
 metrics <- unlist(lapply(x_order_mean[-2], as.character))
-metrics = x_order_mean[ , "Metric"]
 metrics_list = rbind(metrics[-length(metrics)],metrics[-1])
 comparisons = split(metrics_list, col(metrics_list))
 
@@ -329,6 +411,8 @@ ggplot(aes(x=reorder(Metric,-Value, na.rm = TRUE, decreasing = TRUE), y=Value, n
 
 # Ontology clustering according to the readability metrics
 metricsToShow = unique(all$Metric)
+# List metrics are excluded
+metricsToShow <- metricsToShow[!grepl('List', metricsToShow)]
 # DataProperties metrics are excluded
 metricsToShow <- metricsToShow[!grepl('DataProperties', metricsToShow)]
 
@@ -338,19 +422,23 @@ distances = c("maximum")
 clustMethods = c("ward.D")
 base_dir = file.path(rootPath, 'results', 'dendrograms', 'readability_clustering')
 
-# longData = all
-# metricsToUse = metricsToShow
-# distancesToEval = distances
-# clustMethodsToEval = clustMethods
-# baseFolder = base_dir
 
 generateAndEvaluateClusters(all, metricsToShow, distances, clustMethods, base_dir)
 
 
 ### WHOLE REPOSITORY ANALYSIS ###
 
+#METHOD 1: Calculate the metrics taking into account the IRIs of entities in the whole repository.
+dataset = getWholeRepositoryMetrics(folder_path=file.path(rootPath, 'results', 'detailed_files'))
+View(dataset)
+
+#METHOD 2: Mean metric weighted by TotalEntities of each ontology.
+
+#Merge all files with candidate ontologies in a dataframe. Files contains the following fields: File; Metric; Value; NumberOfEntities; TotalEntities
 detailed_allMetrics_candidates <- mergeFiles(folder_path=file.path(candidateResultsPath,"/.."),pattern="detailed_")
+#Merge all files with member ontologies in a dataframe. Files contains the following fields: File; Metric; Value; NumberOfEntities; TotalEntities
 detailed_allMetrics_members <- mergeFiles(folder_path=file.path(memberResultsPath,"/.."),pattern="detailed_")
+#Set a dataframe with the metrics of all repository 
 all_detailed <- rbind(detailed_allMetrics_members,detailed_allMetrics_candidates)
 rm(detailed_allMetrics_candidates)
 rm(detailed_allMetrics_members)
@@ -359,10 +447,11 @@ all_detailed$NumberOfEntities = as.numeric(all_detailed$NumberOfEntities)
 all_detailed$TotalEntities = as.numeric(all_detailed$TotalEntities)
 all_detailed$File = as.character(all_detailed$File)
 
+#Calculate the mean of metrics weighted by TotalEntities
 df_summary <- 
   all_detailed %>%
   group_by(Metric) %>% 
   summarise(weighted_metric_meanvalue= weighted.mean(Value, TotalEntities))
-
+view(df_summary)
 
 
