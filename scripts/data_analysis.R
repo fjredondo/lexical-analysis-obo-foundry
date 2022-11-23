@@ -360,6 +360,13 @@ all$File = as.character(all$File)
 metricsToShow = unique(all$Metric)
 View(compareCandidatesAndMembers(filter(all, Metric %in% metricsToShow)))
 
+#boxplot to compare candidates and member.
+ggplot(all, aes(x=Metric, y=Value, fill=Member)) + 
+  geom_boxplot() + 
+  scale_fill_manual(values = c("White","grey80"), name="", labels=c("not member","member")) +
+  stat_compare_means(method = "wilcox.test", label = "p.format", label.y = 1.05) +
+  theme(axis.text.x = element_text(angle = 65, hjust=1))
+
 # Summary of the readability metrics regarding classes
 summary(spread(all, Metric, Value) %>% select(File, Member, contains('Classes with')))
 # Complete data of the readability metrics regarding classes
