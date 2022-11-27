@@ -418,8 +418,6 @@ ggplot(aes(x=reorder(Metric,-Value, na.rm = TRUE, decreasing = TRUE), y=Value, n
 
 # Ontology clustering according to the readability metrics
 metricsToShow = unique(all$Metric)
-# List metrics are excluded
-metricsToShow <- metricsToShow[!grepl('List', metricsToShow)]
 # DataProperties metrics are excluded
 metricsToShow <- metricsToShow[!grepl('DataProperties', metricsToShow)]
 
