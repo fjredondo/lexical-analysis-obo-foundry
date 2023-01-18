@@ -336,6 +336,34 @@ getWholeRepositoryMetrics <- function(folder_path){
   
 }
 
+plotMetricComparisonWithWholeRepo <- function(whole_repository_metrics, all, individual_ontology_name, output_folder) {
+  ontology_name_clean = tools::file_path_sans_ext(individual_ontology_name)
+  individual_ontology_metrics = all %>% filter(File == individual_ontology_name)
+  colnames(individual_ontology_metrics) = c("file", "metric", "ontologyValue", "member")
+  to_plot = merge(x = whole_repository_metrics, y = individual_ontology_metrics, by="metric") %>% select(metric, ratio, ontologyValue) %>% na.omit()
+  colnames(to_plot) = c("Metric", "Orthogonal", ontology_name_clean)
+  colors = c("blue", "red")
+  names(colors) = c('Orthogonal', ontology_name_clean)
+  plot = ggplot(data=to_plot, aes(x = Metric)) + 
+    geom_line(aes(y = !!sym(ontology_name_clean), color = ontology_name_clean, group = 1)) + 
+    geom_line(aes(y = Orthogonal, color  = "Orthogonal", group = 1)) + 
+    labs(x = "Metric", y = "Value", color = "Legend") + 
+    scale_color_manual(values = colors) +
+    theme(axis.text.x = element_text(angle = 70, hjust=1))
+  ggsave(
+    filename = paste(ontology_name_clean, ".png", sep = ""),
+    plot = plot,
+    device = "png",
+    path = output_folder,
+    scale = 2,
+    width = 10,
+    height = 7,
+    units = "cm",
+    dpi = 100,
+    limitsize = TRUE,
+    bg = NULL
+  )
+}
 
 ### LOAD DATA ###
 
@@ -436,6 +464,11 @@ generateAndEvaluateClusters(all, metricsToShow, distances, clustMethods, base_di
 #METHOD 1: Calculate the metrics taking into account the IRIs of entities in the whole repository.
 dataset = getWholeRepositoryMetrics(folder_path=file.path(rootPath, 'results', 'detailed_files'))
 View(dataset)
+# Plots comparing each ontology with the orthogonal vision
+for(ontology in unique(all$File)){
+  plotMetricComparisonWithWholeRepo(dataset, all, ontology, file.path(rootPath, 'results', 'plots'))
+}
+
 
 #METHOD 2: Mean metric weighted by TotalEntities of each ontology.
 
