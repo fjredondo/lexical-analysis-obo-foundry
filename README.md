@@ -10,6 +10,7 @@ Supplementary data for the readability and the structural accuracy analysis of t
     - **getMetricsMembers.sh**: Bash script to obtain the metrics for the OBO Foundry member ontologies. This script read the folder */data/ontologies/member_ontologies* and put the results in */results/members_results*.
     - **getMetricsMembers.sh**: Bash script to obtain the metrics for the OBO Foundry candidate ontologies. This script read the folder */data/ontologies/candidate_ontologies* and put the results in */results/candidates_results*.
     - **data_analysis.R**: R script intended to be opened in an interactive rstudio session. It contains the R commands used to perform the descriptive analysis, including basic statistics and plots. It also includes commented lines that help to follow the script.
+    - **orthogonal_repository_analysis.R**: R script intended to be opened in an interactive rstudio session. It contains the R commands used to perform an analysis of the metrics applied to the entire repository. They are applied in two different ways, on the one hand, considering that the repository complies with the orthogonality principles and, on the other hand, that the repository is not orthogonal.
 
 - The **results** folder contains several subfolders and files with the results provided by each step, namely:
     - **candidates_results**: Folder including TSV files for each candidate ontology, including its metric values. A file called *allMetrics.tsv* is also included, in which the information about all the candidate ontologies is merged.
@@ -83,4 +84,4 @@ Once the above commands are executed, your results folder will contain a three f
 - *detailed_files*: Set of TSV files including a more detailed information about each ontology-metric pair.
 
 ## Perform analysis
-The descriptive analysis were performed by using the rstudio software. In order to reproduce them, open rstudio and load the corresponding file ([data_analysis.R](./scripts/data_analysis.R) for the descriptive analysis. Then, you can execute any of them line by line in an interactive way. Furthermore, these files include comments to clarify each section.
+The descriptive analysis were performed by using the rstudio software. In order to reproduce them, open rstudio and load the corresponding file [data_analysis.R](./scripts/data_analysis.R) for the descriptive analysis of each ontology, or the file [orthogonal_repository_analysis.R](./scripts/orthogonal_repository_analysis.R) for the entire repository analysis. Then, you can execute any of them line by line in an interactive way. Furthermore, these files include comments to clarify each section.
