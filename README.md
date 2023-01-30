@@ -16,6 +16,7 @@ Supplementary data for the readability and the structural accuracy analysis of t
     - **candidates_results**: Folder including TSV files for each candidate ontology, including its metric values. A file called *allMetrics.tsv* is also included, in which the information about all the candidate ontologies is merged.
     - **members_results**: Folder including TSV files for each member ontology, including its metric values. A file called *allMetrics.tsv* is also included, in which the information about all the member ontologies is merged.
     - **detailed_files**: Folder including detailed files for each (ontology, metric) pair, including extra information at entity level.
+    - **obofoundry_orthogonal_study.xlsx**: Excel file with the result of the study of the absence of reusability of OBO Foundry annotations, according to the orthogonal and non-orthogonal approaches.
 
 # How to reproduce the results
 
